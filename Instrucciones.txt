@@ -1,0 +1,101 @@
+
+##################################################################
+#################### ¿Que es Druid?
+
+Base de datos distribuida de tipo columnar con capacidades analíticas diseñada para consultas OLAP en memoria (in-memory)
+- http://druid.io/
+- http://druid.io/community/
+
+* Real-Time query engine
+* Mapea los datos en memoria los almacena de forma columnar, comprimidos y con índices por cada columna.
+
+DRUID vs Hadoop
+* Processes OLAP-style Queries on the fly in hundreds of milliseconds instead of precalculating everything and dumping into HBase.
+
+##################################################################
+#################### ¿Commodity hardware?
+* 192 - 256GB of RAM
+* 
+
+##################################################################
+#################### Arquitectura
+
+Mezcla de infraestructuras de busqueda tradicionales y de tecnologías de bases de datos, con sistemas de código cerrado como Dremel. Powerdrill y Mesa.
+
+* Características de alta disponibilidad
+* multi-tenant query workloads capacity
+
+Ideal para potenciar la interactividad, permitiendo el manejo del usuario y aplicaciones analíticas.
+
+Eventos pueden ser explorar datos recien ingestados (a few ms after) mientras se genera una vista consolidada simple de los datos de los eventos en tiempo real junto con los eventos historicos que han ocurrido tiempo atras (could be years).
+
+##################################################################
+#################### Capacidades de Druid
+
+Sub-Second Queries
+* Agregaciones y consultas ultrarápidas tipo OLAP y sobre arbitratry slice-and-diced data. 
+* Diseñado para acceso multiusuario para permitir altas capacidades analíticas ad-hoc.
+
+Real-time Streams
+* Ingestión en streaming con posibilidades de visualización en caliente.
+* Mantiene eventos indefinidamente y es capaz de mergear datos en tiempo real y vistas de datos históricos.
+
+Scalable to Petabytes
+* TO-DO Mirar capacidades de escalar.
+
+Deploy Anywhere
+* Integraciones con:
+	- Hadoop
+	- Spark
+	- Kafka
+	- Storm
+	- Samza
+
+Vibrant Community
+* GitHub repo: https://github.com/druid-io/druid
+	- Since Oct 2012
+	- 87 contributors
+	- 370 releases
+	- 18 branches
+
+
+##################################################################
+#################### Extensibilidad
+* Permite integrar plantillas/bocetos y otros algoritmos de desarrollo propio.
+* Esta integración nos permite aprovechar al máximo la arquitectura distribuida y 'share-nothing' que Druid ofrece para el manejo de grandes cantidades de datos 
+
+##################################################################
+############ Casos de uso
+* Dashboards para ejecutivos (executive-level).
+* Analíticas para clientes ad-hoc (customer-facing)
+* Productos con capacidades analíticas (analytically-powered products).
+
+##################################################################
+############ Definiciones
+*****1.- Share-nothing (sharding): Arquitetura distribuida en la que cada nodo es independiente y autosuficiente. No existe un único punto de contención en el sistema.
+	- Ninguno de los nodos comparte nada: Memoria.. Almacenamiento...
+	- Aporta escalabilidad horizontal (commodity hardware).
+	- No hay cuellos de botella.
+	- Tipicamente, este sistema hace particiones de los datos que reparte entre los nodos sobre diferentes bases de datos. Gestionando que cada nodo tenga su porción de la partición.
+
+	- Caché distribuida.
+
+##################################################################
+############ INSTALACION
+
+1º wget http://static.druid.io/artifacts/releases/druid-0.8.1-bin.tar.gz
+2º tar -zxvf druid-0.8.1-bin.tar.gz
+3º cd druid-0.8.1
+
+** Set up Zookeeper
+1º curl http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-3.4.6/zookeeper-3.4.6.tar.gz -o zookeeper-3.4.6.tar.gz
+2º tar xzf zookeeper-3.4.6.tar.gz
+3º cd zookeeper-3.4.6
+4º cp conf/zoo_sample.cfg conf/zoo.cfg
+5º ./bin/zkServer.sh start
+6º cd ..
+
+** Set up Druid Cluster
+1º Desde el directorio de druid --> ls config
+
+

@@ -1,7 +1,7 @@
 [supervisorctl]
 
 [inet_http_server]
-port = IP_NODE:9001
+port = 10.0.2.15:9001
 
 [program:zookeeper]
 command=/home/vagrant/zookeeper/bin/zkServer.sh start-foreground

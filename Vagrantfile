@@ -1,4 +1,11 @@
 ####################################################################################################################
+# VARIABLES DE ENTORNO VAGRANT
+####################################################################################################################
+
+$master_node_ip = "10.0.2.15";
+$child_node_1_ip = "10.0.2.16";
+
+####################################################################################################################
 # Script para los nodos master
 ####################################################################################################################
 
@@ -110,6 +117,27 @@ SCRIPT
 $druid_script = <<SCRIPT
 #!/bin/bash
 
+export IP_NODE=$1
+echo "La IP que asignaremos a éste nodo es:$IP_NODE"
+
+## Modificamos la configuración de las IP de los ficheros
+
+echo "Ajustando plantilla de configuración MySQL"
+cp /vagrant/mysql/my.cnf /vagrant/mysql/my.cnf_config
+sed -e 's/IP_NODE/'$IP_NODE'/g' -i /vagrant/mysql/my.cnf_config
+
+echo "Ajustando plantilla de configuración Supervisor"
+cp /vagrant/supervisor/supervisord.conf /vagrant/supervisor/supervisord.conf_config
+sed -e 's/IP_NODE/'$IP_NODE'/g' -i /vagrant/supervisor/supervisord.conf_config
+
+echo "Ajustando plantilla de configuración Druid"
+cp -rp /vagrant/config /vagrant/config_config
+sed -e 's/IP_NODE/'$IP_NODE'/g' -i /vagrant/config_config/_common/common.runtime.properties
+sed -e 's/IP_NODE/'$IP_NODE'/g' -i /vagrant/config_config/broker/runtime.properties
+sed -e 's/IP_NODE/'$IP_NODE'/g' -i /vagrant/config_config/historical/runtime.properties
+sed -e 's/IP_NODE/'$IP_NODE'/g' -i /vagrant/config_config/middleManager/runtime.properties
+sed -e 's/IP_NODE/'$IP_NODE'/g' -i /vagrant/config_config/overlord/runtime.properties
+
 apt-get install -y supervisor vim less net-tools inetutils-ping curl git telnet nmap socat dnsutils netcat software-properties-common maven
 
 echo "Instalando Druid v0.8.1"
@@ -119,7 +147,7 @@ wget --quiet http://static.druid.io/artifacts/releases/druid-0.8.1-bin.tar.gz &&
   tar -zxf druid-*.gz && \
   mv druid-0.8.1 druid &&\
   mv druid/config druid/config.orig &&\
-  cp -r /vagrant/config druid/config &&\
+  cp -r /vagrant/config_config druid/config &&\
   chown -R vagrant:vagrant druid
 
 wget http://central.maven.org/maven2/org/fusesource/sigar/1.6.4/sigar-1.6.4.jar && \
@@ -149,7 +177,7 @@ else
   echo "Existing db. root password is not changed."
 fi
 
-cp /vagrant/mysql/my.cnf /etc/mysql/my.cnf
+cp /vagrant/mysql/my.cnf_config /etc/mysql/my.cnf
 /etc/init.d/mysql restart
 
 cat <<EOF | mysql -u root --password=$DB_PASSWORD
@@ -162,7 +190,7 @@ echo "Configurando los servicios."
 mkdir -p /var/log/{zookeeper,druid} && \
 chown -R vagrant:vagrant /var/log/{zookeeper,druid}
 service supervisor restart
-cp /vagrant/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+cp /vagrant/supervisor/supervisord.conf_config /etc/supervisor/conf.d/supervisord.conf
 supervisorctl reload
 
 SCRIPT
@@ -193,13 +221,13 @@ Vagrant.configure("2") do |config|
       v.customize ["modifyvm", :id, "--ioapic", "on"]
     end
     #master.vm.network "forwarded_port", guest: 8081, host: 8080
-    #master.vm.network :private_network, ip: "10.0.2.15"
+    master.vm.network :private_network, ip: $master_node_ip
     master.vm.hostname = "vm-druid-master"
     master.vm.provision :shell, :inline => $hosts_script
     master.vm.provision :hostmanager
-    master.vm.provision :shell, :inline => $master_script
+    master.vm.provision :shell, :inline => $master_script, :args => $master_node_ip
     master.vm.provision "puppet",  manifest_file: "default_master.pp"
-    master.vm.provision :shell, :inline => $druid_script
+    master.vm.provision :shell, :inline => $druid_script, :args => $master_node_ip
   end
   
   # WORKER NODE CONFIGURATION
@@ -210,7 +238,7 @@ Vagrant.configure("2") do |config|
 #    end
 #    node1.vm.network :private_network, ip: "10.0.2.16"
 #    node1.vm.hostname = "vm-druid-node1"
-#    node1.vm.provision :shell, :inline => $hosts_script
+#    node1.vm.provision :shell, :inline => $hosts_script 
 #    node1.vm.provision :hostmanager
 #    node1.vm.provision :shell, :inline => $node_script
 #    node1.vm.provision "puppet",  manifest_file: "default_nodes.pp"

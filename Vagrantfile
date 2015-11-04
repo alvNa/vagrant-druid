@@ -220,7 +220,11 @@ Vagrant.configure("2") do |config|
       v.customize ["modifyvm", :id, "--cpus", "2"]
       v.customize ["modifyvm", :id, "--ioapic", "on"]
     end
-    #master.vm.network "forwarded_port", guest: 8081, host: 8080
+    master.vm.network "forwarded_port", guest: 8080, host: 8080
+    master.vm.network "forwarded_port", guest: 8081, host: 8081
+    master.vm.network "forwarded_port", guest: 8090, host: 8090
+    master.vm.network "forwarded_port", guest: 8082, host: 8082
+    master.vm.network "forwarded_port", guest: 8100, host: 8100
     master.vm.network :private_network, ip: $master_node_ip
     master.vm.hostname = "vm-druid-master"
     master.vm.provision :shell, :inline => $hosts_script

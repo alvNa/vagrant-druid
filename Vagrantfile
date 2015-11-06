@@ -193,6 +193,10 @@ service supervisor restart
 cp /vagrant/supervisor/supervisord.conf_config /etc/supervisor/conf.d/supervisord.conf
 supervisorctl reload
 
+echo "Limpiando temporales"
+rm /vagrant/mysql/my.cnf_config
+rm /vagrant/supervisor/supervisord.conf_config
+rm -r /vagrant/config_config
 SCRIPT
 
 
@@ -216,7 +220,7 @@ Vagrant.configure("2") do |config|
   config.vm.define :master do |master|
     master.vm.provider :virtualbox do |v|
       v.name = "vm-druid-master"
-      v.customize ["modifyvm", :id, "--memory", "4048"]
+      v.customize ["modifyvm", :id, "--memory", "8096"]
       v.customize ["modifyvm", :id, "--cpus", "2"]
       v.customize ["modifyvm", :id, "--ioapic", "on"]
     end

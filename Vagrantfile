@@ -2,8 +2,8 @@
 # VARIABLES DE ENTORNO VAGRANT
 ####################################################################################################################
 
-$master_node_ip = "10.0.2.15";
-$child_node_1_ip = "10.0.2.16";
+$master_node_ip = "192.168.50.4";
+$child_node_1_ip = "192.168.50.5";
 
 ####################################################################################################################
 # Script para los nodos master
@@ -202,13 +202,6 @@ SCRIPT
 
 Vagrant.configure("2") do |config|
 
-  # Imagen base Ubuntu Trusty 64bits con Puppet instalado
-  config.vm.box = "puppetlabs/ubuntu-14.04-64-puppet"
-  config.vm.box_version = "1.0.1"
-
-  config.vm.synced_folder "#{ENV['HOME']}/vagrant-druid-master/shared/", "#{ENV['HOME']}/vagrant-druid-master/data", :mount_options => ["dmode=777","fmode=777"] , :create => true
-  
-
   # Manage /etc/hosts on host and VMs
   config.hostmanager.enabled = false
   config.hostmanager.manage_host = true
@@ -218,24 +211,59 @@ Vagrant.configure("2") do |config|
 
   # MASTER NODE CONFIGURATION
   config.vm.define :master do |master|
+    # Imagen base Ubuntu Trusty 64bits con Puppet instalado
+    # master.vm.box = "puppetlabs/ubuntu-14.04-64-puppet"
+    # master.vm.box_version = "1.0.1"
+  
+    # Box de Ubuntu sin Puppet instalado
+    master.vm.box = "ubuntu/trusty64"
+    
+
+    master.vm.synced_folder "#{ENV['HOME']}/vagrant-druid-master/shared/", "#{ENV['HOME']}/vagrant-druid-master/data", :mount_options => ["dmode=777","fmode=777"] , :create => true
+  
+    master.vm.synced_folder ".", "/vagrant"
+    
     master.vm.provider :virtualbox do |v|
       v.name = "vm-druid-master"
       v.customize ["modifyvm", :id, "--memory", "8096"]
       v.customize ["modifyvm", :id, "--cpus", "2"]
       v.customize ["modifyvm", :id, "--ioapic", "on"]
     end
-    master.vm.network "forwarded_port", guest: 8080, host: 8080
-    master.vm.network "forwarded_port", guest: 8081, host: 8081
-    master.vm.network "forwarded_port", guest: 8090, host: 8090
-    master.vm.network "forwarded_port", guest: 8082, host: 8082
-    master.vm.network "forwarded_port", guest: 8100, host: 8100
-    master.vm.network :private_network, ip: $master_node_ip
+    
     master.vm.hostname = "vm-druid-master"
-    master.vm.provision :shell, :inline => $hosts_script
+    master.vm.network :private_network, ip: $master_node_ip
+    
+    # Si queremos redirigir puertos usando 'localhost' habilitar ésto
+    #master.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true
+    #master.vm.network "forwarded_port", guest: 8081, host: 8081, auto_correct: true
+    #master.vm.network "forwarded_port", guest: 8090, host: 8090, auto_correct: true
+    #master.vm.network "forwarded_port", guest: 8082, host: 8082, auto_correct: true
+    #master.vm.network "forwarded_port", guest: 8100, host: 8100, auto_correct: true
+
+    # master.vm.provision :shell, :inline => $hosts_script    
+    master.vm.provision "shell" do |hosts|
+      hosts.inline = $hosts_script
+      hosts.privileged = true
+    end
+
     master.vm.provision :hostmanager
-    master.vm.provision :shell, :inline => $master_script, :args => $master_node_ip
+    
+    # master.vm.provision :shell, :inline => $master_script, :args => $master_node_ip
+    master.vm.provision "shell" do |masterscript|
+      masterscript.inline = $master_script
+      masterscript.args = $master_node_ip
+      masterscript.privileged = true
+    end
+
     master.vm.provision "puppet",  manifest_file: "default_master.pp"
-    master.vm.provision :shell, :inline => $druid_script, :args => $master_node_ip
+
+    # master.vm.provision :shell, :inline => $druid_script, :args => $master_node_ip
+    master.vm.provision "shell" do |druidscript|
+      druidscript.inline = $druid_script
+      druidscript.args = $master_node_ip
+      druidscript.privileged = true
+    end
+
   end
   
   # WORKER NODE CONFIGURATION
